@@ -1,46 +1,74 @@
 {
-    "name": "alamid-view",
-    "version": "0.1.0",
-    "description": "Encapsulates dom nodes as re-useable component",
-    "main": "./lib/View.js",
-    "scripts": {
-        "test": "node node_modules/mocha/bin/mocha -R spec"
-    },
-    "keywords": [
-        "view",
-        "dom",
-        "component",
-        "web",
-        "components",
-        "browser",
-        "display",
-        "viewmodel",
-        "mvc"
-    ],
-    "dependencies": {},
-    "devDependencies": {
-        "mocha": "1.x",
-        "chai": "1.x",
-        "sinon-chai": "2.x"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/peerigon/alamid-view.git"
-    },
-    "testling": {
-        "harness" : "mocha",
-        "files": "test/*.js",
-        "browsers": {
-            "iexplore": [7, 8, 9, 10],
-            "chrome": [20, 25, "canary"],
-            "firefox": [20, 22, "nightly"],
-            "safari": [5, 6],
-            "opera": [11, 12, "next"],
-            "iphone": [6],
-            "ipad": [6],
-            "android-browser": [4.2]
-        }
-    },
-    "author": "peerigon <developers@peerigon.com>",
-    "license": "MIT"
+  "name": "alamid-view",
+  "version": "0.1.0",
+  "description": "Encapsulates dom nodes as a re-useable component",
+  "main": "./lib/View.js",
+  "scripts": {
+    "test": "node node_modules/mocha/bin/mocha -R spec"
+  },
+  "keywords": [
+    "view",
+    "dom",
+    "component",
+    "web",
+    "components",
+    "browser",
+    "display",
+    "viewmodel",
+    "mvc"
+  ],
+  "devDependencies": {
+    "mocha": "1.x",
+    "chai": "1.x",
+    "sinon-chai": "2.x",
+    "sinon": "https://github.com/cjohansen/Sinon.JS/tarball/v1.7.3",
+    "webpack-dev-server": "0.x",
+    "mocha-loader": "0.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peerigon/alamid-view.git"
+  },
+  "testling": {
+    "harness": "mocha",
+    "files": "test/*.js",
+    "browsers": {
+      "iexplore": [
+        7,
+        8,
+        9,
+        10
+      ],
+      "chrome": [
+        20,
+        25,
+        "canary"
+      ],
+      "firefox": [
+        20,
+        22,
+        "nightly"
+      ],
+      "safari": [
+        5,
+        6
+      ],
+      "opera": [
+        11,
+        12,
+        "next"
+      ],
+      "iphone": [
+        6
+      ],
+      "ipad": [
+        6
+      ],
+      "android-browser": [
+        4.2
+      ]
+    }
+  },
+  "author": "peerigon <developers@peerigon.com>",
+  "license": "MIT"
 }

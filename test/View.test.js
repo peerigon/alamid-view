@@ -3,6 +3,7 @@
 var chai = require("chai"),
     sinon = require("sinon"),
     View = require("../lib/View.js"),
+    collectNodes = require("../lib/collectNodes.js"),
     expect = chai.expect;
 
 chai.use(require("sinon-chai"));
@@ -10,24 +11,38 @@ chai.use(require("sinon-chai"));
 describe("View", function () {
 
     describe(".configure()", function () {
+        var config;
 
         function emit() {}
-        function on() {}
-        function removeListener() {}
+        function once() {}
         function removeAllListeners() {}
+        function $() {}
+        function DisposeEvent() {}
+
+        // preserve default config
+        before(function () {
+             config = View.prototype.config;
+        });
+        after(function () {
+             View.prototype.config = config;
+        });
 
         it("should set the given config", function () {
             View.configure({
                 emit: emit,
-                on: on,
-                removeListener: removeListener,
-                removeAllListeners: removeAllListeners
+                once: once,
+                removeAllListeners: removeAllListeners,
+                $: $,
+                DisposeEvent: DisposeEvent,
+                dev: true
             });
 
             expect(View.prototype.config.emit).to.equal(emit);
-            expect(View.prototype.config.on).to.equal(on);
-            expect(View.prototype.config.removeListener).to.equal(removeListener);
+            expect(View.prototype.config.once).to.equal(once);
             expect(View.prototype.config.removeAllListeners).to.equal(removeAllListeners);
+            expect(View.prototype.config.$).to.equal($);
+            expect(View.prototype.config.DisposeEvent).to.equal(DisposeEvent);
+            expect(View.prototype.config.dev).to.equal(true);
         });
 
     });
@@ -49,20 +64,21 @@ describe("View", function () {
     });
 
     describe(".prototype", function () {
-        var s,
-            emit,
-            event,
-            obj;
-
-        beforeEach(function () {
-            s = new View();
-            View.prototype.config.emit = emit = sinon.spy();
-        });
+        var view,
+            event;
 
         describe(".config", function () {
 
             it("should be an object containing the current config", function () {
                 expect(View.prototype.config).to.be.an("object");
+            });
+
+        });
+
+        describe(".template", function () {
+
+            it("should provide an empty div as default template", function () {
+                expect(View.prototype.template).to.equal("<div></div>");
             });
 
         });
@@ -75,7 +91,7 @@ describe("View", function () {
                 expect(constructor).to.be.a("function");
 
                 View.prototype.constructor = sinon.spy();
-                s = new View();
+                view = new View();
                 expect(View.prototype.constructor).to.have.been.called;
 
                 View.prototype.constructor = constructor;
@@ -85,240 +101,31 @@ describe("View", function () {
                 expect(new View()).to.be.an.instanceof(View);
             });
 
-            it("should be callable with an initial object", function () {
-                s = new View(obj = {});
-                expect(s.toObject()).to.equal(obj);
-            });
+            describe("when passing no arguments", function () {
 
-        });
+                function MyView() {
+                    View.call(this);
+                }
 
-        describe(".toObject()", function () {
-
-            it("should return the internal object", function () {
-                obj = s.toObject();
-                expect(obj).to.be.an.instanceof(Object);
-                s.set("greeting", "hi");
-                expect(obj.greeting).to.equal("hi");
-            });
-
-        });
-
-        describe(".set()", function () {
-
-            it("should store the value under the given key", function () {
-                s.set("greeting", "hi");
-                expect(s.toObject()).to.eql({
-                    greeting: "hi"
-                });
-            });
-
-            it("should cast the key to a string", function () {
-                var key = {
-                    toString: function () {
-                        return "I'm an arbitrary object";
-                    }
-                };
-
-                s.set(key, "some value");
-                expect(s.toObject()["I'm an arbitrary object"]).to.equal("some value");
-            });
-
-            it("should be chainable", function () {
-                expect(s.set("greeting", "hi")).to.equal(s);
-            });
-
-            it("should emit an 'add'-event", function () {
-                s.set("greeting", "hi");
-
-                expect(emit).to.have.been.calledOnce;
-
-                expect(emit.firstCall).to.have.been.calledWith("add");
-                event = emit.firstCall.args[1];
-                expect(event).to.eql({
-                    name: "add",
-                    target: s,
-                    key: "greeting",
-                    element: "hi"
-                });
-                expect(event.target.toObject()[event.key]).to.equal(event.element);
-            });
-            
-            describe("if there is already a value stored under the given key", function () {
-
-                beforeEach(function () {
-                    s.toObject().greeting = "ahoi";
-                });
-                
-                it("should emit an 'remove'-event and then an 'add'-event", function () {
-                    s.set("greeting", "hi");
-
-                    expect(emit).to.have.been.calledTwice;
-
-                    expect(emit.firstCall).to.have.been.calledWith("remove");
-                    event = emit.firstCall.args[1];
-                    expect(event).to.eql({
-                        name: "remove",
-                        target: s,
-                        key: "greeting",
-                        element: "ahoi"
-                    });
-
-                    expect(emit.secondCall).to.have.been.calledWith("add");
-                    event = emit.secondCall.args[1];
-                    expect(event).to.eql({
-                        name: "add",
-                        target: s,
-                        key: "greeting",
-                        element: "hi"
-                    });
-                    expect(event.target.toObject()[event.key]).to.equal(event.element);
-                });
-                
-            });
-
-            describe("if the same value is stored under the given key", function () {
-
-                it("should not emit any events if '===' returns true", function () {
-                    s.toObject().greeting = "hi";
-                    s.set("greeting", "hi");
-                    expect(emit).to.not.have.been.called;
+                before(function () {
+                    MyView.prototype = Object.create(View.prototype);
+                    MyView.prototype.template = "<ul></ul>";
                 });
 
-                it("should emit events if '==' returns true but '===' returns false", function () {
-                    s.toObject().num = 0;
-                    s.set("num", "0");
-                    expect(emit).to.have.been.called;
+                it("should turn the .template into a root node", function () {
+                    view = new MyView();
+                    expect(view._root).to.be.an.instanceof(HTMLUListElement);
                 });
 
             });
 
-        });
+            describe("when passing a dom node", function () {
 
-        describe(".setAll()", function () {
+                it("should take the dom node as root", function () {
+                    var node = document.createElement("ul");
 
-            it("should call .set() for each value in the given object", function () {
-                s.set = sinon.spy();
-                s.setAll({
-                    greeting: "hi",
-                    goodbye: "ciao"
-                });
-                expect(s.set).to.have.been.calledTwice;
-                expect(s.set.firstCall).to.have.been.calledWith("greeting", "hi");
-                expect(s.set.secondCall).to.have.been.calledWith("goodbye", "ciao");
-            });
-
-            it("should be chainable", function () {
-                expect(s.setAll({})).to.equal(s);
-            });
-
-        });
-
-        describe(".get()", function () {
-
-            it("should return the value", function () {
-                s.toObject().greeting = "hi";
-                expect(s.get("greeting")).to.equal("hi");
-            });
-
-            describe("if there is no value stored under the given key", function () {
-
-                it("should return undefined", function () {
-                    expect(s.get("greeting")).to.equal(undefined);
-                });
-
-            });
-
-        });
-
-        describe(".getAll()", function () {
-
-            beforeEach(function () {
-                obj = s.toObject();
-                obj.greeting = "hi";
-                obj.goodbye = "ciao";
-            });
-
-            it("should call .get() for each value in the set", function () {
-                s.get = sinon.spy();
-                s.getAll();
-                expect(s.get).to.have.been.calledTwice;
-                expect(s.get.firstCall).to.have.been.calledWith("greeting");
-                expect(s.get.secondCall).to.have.been.calledWith("goodbye");
-            });
-
-            it("should NOT return the internal object", function () {
-                expect(s.getAll()).to.not.to.equal(s.toObject());
-                expect(s.getAll()).to.eql(s.toObject());
-            });
-
-        });
-
-        describe(".has()", function () {
-
-            describe("if any value has been stored under the given key", function () {
-
-                it("should return true", function () {
-                    obj = s.toObject();
-                    obj.greeting = "hi";
-                    obj.someUndefined = undefined;
-                    obj.someNull = null;
-                    obj.someZero = 0;
-
-                    expect(s.has("greeting")).to.equal(true);
-                    expect(s.has("someUndefined")).to.equal(true);
-                    expect(s.has("someNull")).to.equal(true);
-                    expect(s.has("someZero")).to.equal(true);
-                });
-
-            });
-
-            describe("if there is no value stored under the given key", function () {
-
-                it("should return false", function () {
-                    expect(s.has("value")).to.equal(false);
-                });
-
-                it("should return false even if the value is defined in the prototype chain", function () {
-                    Object.prototype.bla = "bla";
-                    expect(s.has("bla")).to.equal(false);
-                    delete Object.prototype.bla;
-                });
-
-            });
-
-        });
-
-        describe(".remove()", function () {
-
-            beforeEach(function () {
-                s.toObject().greeting = "hi";
-            });
-
-            it("should remove the given key", function () {
-                s.remove("greeting");
-                expect(s.toObject()).to.not.have.ownProperty("greeting");
-            });
-
-            it("should emit a 'remove'-event", function () {
-                s.remove("greeting");
-
-                expect(emit).to.have.been.calledOnce;
-
-                expect(emit.firstCall).to.have.been.calledWith("remove");
-                event = emit.firstCall.args[1];
-                expect(event).to.eql({
-                    name: "remove",
-                    target: s,
-                    element: "hi",
-                    key: "greeting"
-                });
-            });
-
-            describe("if there is no value stored under the given key", function () {
-
-                it("should not emit any events", function () {
-                    s.remove("someOtherValue");
-                    expect(emit).to.not.have.been.called;
+                    view = new View(node);
+                    expect(view._root).to.be.an.instanceof(HTMLUListElement);
                 });
 
             });
@@ -326,21 +133,88 @@ describe("View", function () {
         });
 
         describe(".dispose()", function () {
+            var removeAllListeners,
+                emit,
+                DisposeEvent;
 
-            it("should call removeAllListeners() on the set", function () {
-                var removeAllListeners;
+            beforeEach(function () {
+                view = new View();
+                view.config = Object.create(view.config);
+            });
 
-                s.config = Object.create(s.config);
-                s.config.removeAllListeners = removeAllListeners = sinon.spy();
-
-                s.dispose();
-
+            it("should call removeAllListeners() on the view", function () {
+                view.config.removeAllListeners = removeAllListeners = sinon.spy();
+                view.dispose();
                 expect(removeAllListeners).to.have.been.calledOnce;
             });
 
-            it("should clear the _elements reference", function () {
-                s.dispose();
-                expect(s._elements).to.not.be.ok;
+            it("should remove all node references", function () {
+                view.dispose();
+                expect(collectNodes(view)).to.be.empty;
+            });
+
+            it("should emit a 'dispose'-event", function () {
+                view.config.emit = emit = sinon.spy();
+                view.dispose();
+
+                expect(emit).to.have.been.calledWith("dispose");
+                event = emit.firstCall.args[1];
+                expect(event).to.eql({
+                    name: "dispose",
+                    target: view
+                });
+            });
+
+            describe("in dev-mode", function () {
+                var error;
+
+                beforeEach(function () {
+                    view.config.dev = true;
+                });
+
+                it("should warn about forgotten node references", function () {
+                    var nodes;
+
+                    error = console.error;
+                    console.error = sinon.spy();
+
+                    view.obj = {
+                        obj: {
+                            evilDiv: document.createElement("div")
+                        },
+                        arr: [ document.createElement("div") ]
+                    };
+                    view.dispose();
+
+                    expect(console.error).to.have.been.calledTwice;
+                    nodes = console.error.secondCall.args[0];
+                    expect(nodes).to.eql([view.obj.obj.evilDiv, view.obj.arr[0]]);
+                    view.obj = null;
+                });
+
+            });
+
+            describe("with a custom DisposeEvent", function () {
+
+                it("should emit the custom DisposeEvent", function () {
+                    var event = {
+                        name: "DISPOSE"
+                    };
+
+                    function MyDisposeEvent(target) {
+                        expect(target).to.equal(view);
+
+                        return event;
+                    }
+
+                    view.config.emit = emit = sinon.spy();
+                    view.config.DisposeEvent = MyDisposeEvent;
+                    view.dispose();
+
+                    expect(emit).to.have.been.calledWith("DISPOSE");
+                    expect(emit.firstCall.args[1]).to.equal(event);
+                });
+
             });
 
         });
