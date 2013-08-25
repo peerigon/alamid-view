@@ -10,6 +10,10 @@ chai.use(require("sinon-chai"));
 
 describe("View", function () {
 
+    it("should return an instance of View", function () {
+        expect(new View()).to.be.an.instanceof(View);
+    });
+
     describe(".configure()", function () {
         var config;
 
@@ -17,7 +21,7 @@ describe("View", function () {
         function once() {}
         function removeAllListeners() {}
         function $() {}
-        function DisposeEvent() {}
+        function $removeEventListener() {}
 
         // preserve default config
         before(function () {
@@ -33,7 +37,7 @@ describe("View", function () {
                 once: once,
                 removeAllListeners: removeAllListeners,
                 $: $,
-                DisposeEvent: DisposeEvent,
+                $removeEventListener: $removeEventListener,
                 dev: true
             });
 
@@ -41,7 +45,7 @@ describe("View", function () {
             expect(View.prototype.config.once).to.equal(once);
             expect(View.prototype.config.removeAllListeners).to.equal(removeAllListeners);
             expect(View.prototype.config.$).to.equal($);
-            expect(View.prototype.config.DisposeEvent).to.equal(DisposeEvent);
+            expect(View.prototype.config.$removeEventListener).to.equal($removeEventListener);
             expect(View.prototype.config.dev).to.equal(true);
         });
 
@@ -83,7 +87,15 @@ describe("View", function () {
 
         });
 
-        describe(".constructor()", function () {
+        describe(".disposables", function () {
+
+            it("should be an empty array", function () {
+                expect(new View().disposables).to.eql([]);
+            });
+
+        });
+
+        describe(".constructor", function () {
 
             it("should be an override-able function", function () {
                 var constructor = View.prototype.constructor;
@@ -97,35 +109,277 @@ describe("View", function () {
                 View.prototype.constructor = constructor;
             });
 
-            it("should return an instance of View", function () {
-                expect(new View()).to.be.an.instanceof(View);
+        });
+
+        describe(".constructor()", function () {
+
+            function MyView() {
+                View.call(this);
+            }
+
+            before(function () {
+                MyView.prototype = Object.create(View.prototype);
+                MyView.prototype.template = "<ul></ul>";
             });
 
-            describe("when passing no arguments", function () {
+            it("should turn the .template into a root node", function () {
+                view = new MyView();
+                expect(view._root).to.be.an.instanceof(HTMLUListElement);
+            });
 
-                function MyView() {
-                    View.call(this);
-                }
+            it("should create independent instances", function () {
+                var view2 = new MyView();
+                expect(view._root).to.not.equal(view2._root);
+            });
 
-                before(function () {
-                    MyView.prototype = Object.create(View.prototype);
-                    MyView.prototype.template = "<ul></ul>";
-                });
+        });
 
-                it("should turn the .template into a root node", function () {
-                    view = new MyView();
-                    expect(view._root).to.be.an.instanceof(HTMLUListElement);
+        describe(".constructor(root)", function () {
+
+            it("should take the dom node as root", function () {
+                var node = document.createElement("ul");
+
+                view = new View(node);
+                expect(view._root).to.be.an.instanceof(HTMLUListElement);
+            });
+
+        });
+
+        describe(".getRoot()", function () {
+
+            beforeEach(function () {
+                view = new View();
+                view.config = Object.create(view.config);
+            });
+
+            it("should return the $-enhanced root node", function () {
+                var root = {},
+                    returned,
+                    $;
+
+                view.config.$ = $ = sinon.stub().returns(root);
+
+                returned = view.getRoot();
+
+                expect($).to.have.been.calledWith(view._root);
+                expect(returned).to.equal(root);
+            });
+
+        });
+
+        describe(".getParent()", function () {
+
+            beforeEach(function () {
+                view = new View();
+            });
+
+            describe("when the view has never been appended to a parent view", function () {
+
+                it("should return null", function () {
+                    expect(view.getParent()).to.equal(null);
                 });
 
             });
 
-            describe("when passing a dom node", function () {
+            describe("when the view has been appended to a parent view", function () {
+                var parent;
 
-                it("should take the dom node as root", function () {
-                    var node = document.createElement("ul");
+                beforeEach(function () {
+                    parent = new View();
+                    parent.append(view).at(parent._root);
+                });
 
-                    view = new View(node);
-                    expect(view._root).to.be.an.instanceof(HTMLUListElement);
+                it("should return the parent view", function () {
+                    expect(view.getParent()).to.equal(parent);
+                });
+
+            });
+
+            describe("when the view has been appended and detached again", function () {
+
+                beforeEach(function () {
+                    var parent = new View();
+
+                    parent.append(view).at(parent._root);
+                    view.detach();
+                });
+
+                it("should return null again", function () {
+                    expect(view.getParent()).to.equal(null);
+                });
+
+            });
+
+        });
+
+        describe(".isInDocument()", function () {
+
+            beforeEach(function () {
+                view = new View();
+            });
+
+            describe("when the view has never been appended to a parent view", function () {
+
+                it("should return false", function () {
+                    expect(view.isInDocument()).to.equal(false);
+                });
+
+            });
+
+            describe("when the view has been appended to a parent view", function () {
+                var parent;
+
+                beforeEach(function () {
+                    parent = new View();
+                    parent.append(view).at(parent._root);
+                });
+
+                it("should return true", function () {
+                    expect(view.isInDocument()).to.equal(true);
+                });
+
+            });
+
+            describe("when the view has been appended and detached again", function () {
+
+                beforeEach(function () {
+                    var parent = new View();
+
+                    parent.append(view).at(parent._root);
+                    view.detach();
+                });
+
+                it("should return false again", function () {
+                    expect(view.isInDocument()).to.equal(false);
+                });
+
+            });
+
+        });
+
+        describe(".find(query)", function () {
+
+            beforeEach(function () {
+                view = new View();
+                view.config = Object.create(view.config);
+            });
+
+            it("should return the result of $(root).find(query)", function () {
+                var nodes = [],
+                    query = "li",
+                    find,
+                    returned,
+                    $;
+
+                find = sinon.stub().returns(nodes);
+                view.config.$ = $ = sinon.stub().returns({
+                    find: find
+                });
+
+                returned = view.find(query);
+
+                expect($).to.have.been.calledWith(view._root);
+                expect(find).to.have.been.calledWith(query);
+                expect(returned).to.equal(nodes);
+            });
+
+        });
+
+        describe(".append(subView)", function () {
+            var subView;
+
+            beforeEach(function () {
+                view = new View();
+                subView = new View();
+            });
+
+            it("should return view._appender with the right context and target", function () {
+                var appender;
+
+                appender = view.append(subView);
+                expect(appender).to.equal(view._appender);
+                expect(appender.context).to.equal(view);
+                expect(appender.target).to.equal(subView);
+            });
+
+            describe(".at(node)", function () {
+                var node;
+
+                beforeEach(function () {
+                    node = view._root;
+                });
+
+                it("should append the subView below the node", function () {
+                    view.append(subView).at(node);
+                    expect(node.firstChild).to.equal(subView._root);
+                });
+
+                it("should add the subView to .disposables", function () {
+                    view.append(subView).at(node);
+                    expect(view.disposables).to.contain(subView);
+                });
+
+                describe("when the subView is currently part of another view", function () {
+
+                    it("should call .detach() first", function () {
+                        var oldView = new View();
+
+                        oldView.append(subView).at(oldView._root);
+                        subView.detach = sinon.spy();
+                        view.append(subView).at(view._root);
+
+                        expect(subView.detach).to.have.been.called;
+                    });
+
+                });
+
+            });
+
+            describe(".at($node) with $node being an array of one element", function () {
+                var $node,
+                    node;
+
+                beforeEach(function () {
+                    node = view._root;
+                    $node = [node];
+                });
+
+                it("should 'unwrap' the enhanced $node via $node[0]", function () {
+                    view.append(subView).at($node);
+                    expect(node.firstChild).to.equal(subView._root);
+                });
+
+            });
+
+        });
+
+        describe(".detach()", function () {
+
+            it("should be chainable", function () {
+                expect(view.detach()).to.equal(view);
+            });
+
+            describe("when the view has no parent view", function () {
+
+                it("should do nothing", function () {
+                    view.detach();
+                    view.detach();
+                });
+
+            });
+
+            describe("when the view is part of another view", function () {
+                var parent;
+
+                beforeEach(function () {
+                    parent = new View();
+                    parent.append(view).at(parent._root);
+                });
+
+                it("should call .detach(this) on the parent", function () {
+                    parent.detach = sinon.spy();
+                    view.detach();
+                    expect(parent.detach).to.have.been.calledWith(view);
                 });
 
             });
@@ -134,8 +388,7 @@ describe("View", function () {
 
         describe(".dispose()", function () {
             var removeAllListeners,
-                emit,
-                DisposeEvent;
+                emit;
 
             beforeEach(function () {
                 view = new View();
@@ -151,6 +404,38 @@ describe("View", function () {
             it("should remove all node references", function () {
                 view.dispose();
                 expect(collectNodes(view)).to.be.empty;
+            });
+
+            it("should remove references on the appender that could point back to the view", function () {
+                view._appender.context = view._appender.target = view;
+                view.dispose();
+
+                expect(view._appender.context).to.equal(null);
+                expect(view._appender.target).to.equal(null);
+            });
+
+            it("should call view.config.$removeEventListener(view._root)", function () {
+                var root = view._root,
+                    $removeEventListener;
+
+                view.config.$removeEventListener = $removeEventListener = sinon.spy();
+                view.dispose();
+
+                expect($removeEventListener).to.have.been.calledWith(root);
+            });
+
+            it("should call .dispose() on all objects of .disposables", function () {
+                var disp1 = {},
+                    disp2 = {};
+
+                disp1.dispose = sinon.spy();
+                disp2.dispose = sinon.spy();
+
+                view.disposables.push(disp1, disp2);
+                view.dispose();
+
+                expect(disp1.dispose).to.have.been.called;
+                expect(disp2.dispose).to.have.been.called;
             });
 
             it("should emit a 'dispose'-event", function () {
@@ -190,29 +475,6 @@ describe("View", function () {
                     nodes = console.error.secondCall.args[0];
                     expect(nodes).to.eql([view.obj.obj.evilDiv, view.obj.arr[0]]);
                     view.obj = null;
-                });
-
-            });
-
-            describe("with a custom DisposeEvent", function () {
-
-                it("should emit the custom DisposeEvent", function () {
-                    var event = {
-                        name: "DISPOSE"
-                    };
-
-                    function MyDisposeEvent(target) {
-                        expect(target).to.equal(view);
-
-                        return event;
-                    }
-
-                    view.config.emit = emit = sinon.spy();
-                    view.config.DisposeEvent = MyDisposeEvent;
-                    view.dispose();
-
-                    expect(emit).to.have.been.calledWith("DISPOSE");
-                    expect(emit.firstCall.args[1]).to.equal(event);
                 });
 
             });
