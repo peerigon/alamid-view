@@ -87,14 +87,6 @@ describe("View", function () {
 
         });
 
-        describe(".disposables", function () {
-
-            it("should be an empty array", function () {
-                expect(new View().disposables).to.eql([]);
-            });
-
-        });
-
         describe(".constructor", function () {
 
             it("should be an override-able function", function () {
@@ -145,7 +137,7 @@ describe("View", function () {
 
         });
 
-        describe(".getRoot()", function () {
+        describe(".root()", function () {
 
             beforeEach(function () {
                 view = new View();
@@ -159,7 +151,7 @@ describe("View", function () {
 
                 view.config.$ = $ = sinon.stub().returns(root);
 
-                returned = view.getRoot();
+                returned = view.root();
 
                 expect($).to.have.been.calledWith(view._root);
                 expect(returned).to.equal(root);
@@ -167,47 +159,14 @@ describe("View", function () {
 
         });
 
-        describe(".getParent()", function () {
+        describe(".parent()", function () {
 
             beforeEach(function () {
                 view = new View();
             });
 
-            describe("when the view has never been appended to a parent view", function () {
-
-                it("should return null", function () {
-                    expect(view.getParent()).to.equal(null);
-                });
-
-            });
-
-            describe("when the view has been appended to a parent view", function () {
-                var parent;
-
-                beforeEach(function () {
-                    parent = new View();
-                    parent.append(view).at(parent._root);
-                });
-
-                it("should return the parent view", function () {
-                    expect(view.getParent()).to.equal(parent);
-                });
-
-            });
-
-            describe("when the view has been appended and detached again", function () {
-
-                beforeEach(function () {
-                    var parent = new View();
-
-                    parent.append(view).at(parent._root);
-                    view.detach();
-                });
-
-                it("should return null again", function () {
-                    expect(view.getParent()).to.equal(null);
-                });
-
+            it("should return null in the initial state", function () {
+                expect(view.parent()).to.equal(null);
             });
 
         });
@@ -218,41 +177,8 @@ describe("View", function () {
                 view = new View();
             });
 
-            describe("when the view has never been appended to a parent view", function () {
-
-                it("should return false", function () {
-                    expect(view.isInDocument()).to.equal(false);
-                });
-
-            });
-
-            describe("when the view has been appended to a parent view", function () {
-                var parent;
-
-                beforeEach(function () {
-                    parent = new View();
-                    parent.append(view).at(parent._root);
-                });
-
-                it("should return true", function () {
-                    expect(view.isInDocument()).to.equal(true);
-                });
-
-            });
-
-            describe("when the view has been appended and detached again", function () {
-
-                beforeEach(function () {
-                    var parent = new View();
-
-                    parent.append(view).at(parent._root);
-                    view.detach();
-                });
-
-                it("should return false again", function () {
-                    expect(view.isInDocument()).to.equal(false);
-                });
-
+            it("should return false in the initial state", function () {
+                expect(view.isInDocument()).to.equal(false);
             });
 
         });
@@ -286,20 +212,20 @@ describe("View", function () {
         });
 
         describe(".append(subView)", function () {
-            var subView;
+            var child;
 
             beforeEach(function () {
                 view = new View();
-                subView = new View();
+                child = new View();
             });
 
             it("should return view._appender with the right context and target", function () {
                 var appender;
 
-                appender = view.append(subView);
+                appender = view.append(child);
                 expect(appender).to.equal(view._appender);
                 expect(appender.context).to.equal(view);
-                expect(appender.target).to.equal(subView);
+                expect(appender.target).to.equal(child);
             });
 
             describe(".at(node)", function () {
@@ -309,26 +235,37 @@ describe("View", function () {
                     node = view._root;
                 });
 
-                it("should append the subView below the node", function () {
-                    view.append(subView).at(node);
-                    expect(node.firstChild).to.equal(subView._root);
+                it("should append the child below the node", function () {
+                    view.append(child).at(node);
+                    expect(node.firstChild).to.equal(child._root);
                 });
 
-                it("should add the subView to .disposables", function () {
-                    view.append(subView).at(node);
-                    expect(view.disposables).to.contain(subView);
+                it("should set the parent view", function () {
+                    view.append(child).at(node);
+                    expect(child.parent()).to.equal(view);
                 });
 
-                describe("when the subView is currently part of another view", function () {
+                it("should set the child's isInDocument-flag according to the parent view's", function () {
+                    view._isInDocument = true; // fake isInDocument
+                    view.append(child).at(node);
+                    expect(child.isInDocument()).to.equal(true);
+                });
+
+                it("should add the child to the children array", function () {
+                    view.append(child).at(node);
+                    expect(view.children()).to.contain(child);
+                });
+
+                describe("when the child is currently part of another view", function () {
 
                     it("should call .detach() first", function () {
                         var oldView = new View();
 
-                        oldView.append(subView).at(oldView._root);
-                        subView.detach = sinon.spy();
-                        view.append(subView).at(view._root);
+                        oldView.append(child).at(oldView._root);
+                        child.detach = sinon.spy();
+                        view.append(child).at(view._root);
 
-                        expect(subView.detach).to.have.been.called;
+                        expect(child.detach).to.have.been.called;
                     });
 
                 });
@@ -345,8 +282,8 @@ describe("View", function () {
                 });
 
                 it("should 'unwrap' the enhanced $node via $node[0]", function () {
-                    view.append(subView).at($node);
-                    expect(node.firstChild).to.equal(subView._root);
+                    view.append(child).at($node);
+                    expect(node.firstChild).to.equal(child._root);
                 });
 
             });
@@ -380,6 +317,66 @@ describe("View", function () {
                     parent.detach = sinon.spy();
                     view.detach();
                     expect(parent.detach).to.have.been.calledWith(view);
+                });
+
+            });
+
+        });
+
+        describe(".detach(child)", function () {
+            var child;
+
+            beforeEach(function () {
+                view = new View();
+            });
+
+            it("should be chainable", function () {
+                expect(view.detach(new View())).to.equal(view);
+            });
+
+            describe("when the passed view is a child", function () {
+
+                beforeEach(function () {
+                    child = new View();
+                    view.append(child).at(view._root);
+                });
+
+                it("should remove the child's root node", function () {
+                    expect(view._root.children).to.have.length(1);
+                    view.detach(child);
+                    expect(view._root.children).to.have.length(0);
+                });
+
+                it("should set the child's parent to null", function () {
+                    view.detach(child);
+                    expect(child.parent()).to.equal(null);
+                });
+
+                it("should set the child's isInDocument-flag to false", function () {
+                    view.detach(child);
+                    expect(child.isInDocument()).to.equal(false);
+                });
+
+                it("should remove the child from the children-array", function () {
+                    view.detach(child);
+                    expect(view.children()).to.not.contain(child);
+                });
+
+            });
+
+            describe("when the passed view is not a child", function () {
+                var otherView;
+
+                beforeEach(function () {
+                    child = new View();
+                    otherView = new View();
+                    view.append(child).at(view._root);
+                });
+
+                it("should have no effect", function () {
+                    otherView.detach(child);
+                    expect(child.parent()).to.equal(view);
+                    expect(otherView.children()).to.not.contain(child);
                 });
 
             });
@@ -424,14 +421,14 @@ describe("View", function () {
                 expect($removeEventListener).to.have.been.calledWith(root);
             });
 
-            it("should call .dispose() on all objects of .disposables", function () {
+            it("should call .dispose() on all objects of .children()", function () {
                 var disp1 = {},
                     disp2 = {};
 
                 disp1.dispose = sinon.spy();
                 disp2.dispose = sinon.spy();
 
-                view.disposables.push(disp1, disp2);
+                view.children().push(disp1, disp2);
                 view.dispose();
 
                 expect(disp1.dispose).to.have.been.called;
