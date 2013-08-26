@@ -1,4 +1,4 @@
 module.exports = {
-    entry: "mocha!./View.test.js",
+    entry: "mocha!./main.js",
     devtool: "eval"
 };
