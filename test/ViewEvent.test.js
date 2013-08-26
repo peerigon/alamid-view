@@ -3,6 +3,7 @@
 var chai = require("chai"),
     sinon = require("sinon"),
     ViewEvent = require("../lib/ViewEvent.js"),
+    View = require("../lib/View.js"),
     expect = chai.expect;
 
 chai.use(require("sinon-chai"));
@@ -67,6 +68,23 @@ describe("ViewEvent", function () {
             expect(event.isDefaultPrevented()).to.equal(true);
             event.preventDefault(); // calling it twice doesn't change a thing
             expect(event.isDefaultPrevented()).to.equal(true);
+        });
+
+    });
+
+    describe(".emit()", function () {
+
+        it("should trigger target.config.emit", function () {
+            var target = new View();
+
+            target.config.emit = sinon.spy();
+
+            event = new ViewEvent(target);
+            event.name = "someevent";
+            event.emit();
+
+            expect(target.config.emit).to.have.been.calledWith("someevent", event);
+            expect(target.config.emit).to.have.been.calledOn(target);
         });
 
     });
