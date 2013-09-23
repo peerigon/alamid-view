@@ -312,12 +312,27 @@ describe("View", function () {
                     parent = new View();
                     parent.append(view).at(parent._root);
                 });
-
-                it("should call .detach(this) on the parent", function () {
-                    parent.detach = sinon.spy();
+                
+                it("should remove the root node from dom", function () {
+                    expect(parent._root.children).to.have.length(1);
                     view.detach();
-                    expect(parent.detach).to.have.been.calledWith(view);
+                    expect(parent._root.children).to.have.length(0);
                 });
+
+                it("should set the view's parent to null", function () {
+                    view.detach();
+                    expect(view.parent()).to.equal(null);
+                });
+
+                it("should set the child's isInDocument-flag to false", function () {
+                    view.detach();
+                    expect(view.isInDocument()).to.equal(false);
+                });
+
+                it("should remove the child from the children-array", function () {
+                    view.detach();
+                    expect(parent.children()).to.not.contain(view);
+                });                
 
             });
 
@@ -341,26 +356,9 @@ describe("View", function () {
                     view.append(child).at(view._root);
                 });
 
-                it("should remove the child's root node", function () {
-                    expect(view._root.children).to.have.length(1);
-                    view.detach(child);
-                    expect(view._root.children).to.have.length(0);
-                });
 
-                it("should set the child's parent to null", function () {
-                    view.detach(child);
-                    expect(child.parent()).to.equal(null);
-                });
 
-                it("should set the child's isInDocument-flag to false", function () {
-                    view.detach(child);
-                    expect(child.isInDocument()).to.equal(false);
-                });
 
-                it("should remove the child from the children-array", function () {
-                    view.detach(child);
-                    expect(view.children()).to.not.contain(child);
-                });
 
             });
 

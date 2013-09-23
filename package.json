@@ -4,7 +4,7 @@
   "description": "Encapsulates dom nodes as a re-useable component",
   "main": "./lib/View.js",
   "scripts": {
-    "test": "node node_modules/mocha/bin/mocha -R spec"
+    "test": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js --entry mocha\\!./test/main.js"
   },
   "keywords": [
     "view",
