@@ -127,12 +127,27 @@ describe("View", function () {
         });
 
         describe(".constructor(root)", function () {
+            var node;
+
+            beforeEach(function () {
+                node = document.createElement("ul");
+            });
 
             it("should take the dom node as root", function () {
-                var node = document.createElement("ul");
-
                 view = new View(node);
                 expect(view._root).to.be.an.instanceof(HTMLUListElement);
+            });
+
+            it("should set the isInDocument-flag accordingly", function () {
+                view = new View(node);
+                expect(view.isInDocument()).to.equal(false);
+
+                document.body.appendChild(node);
+
+                view = new View(node);
+                expect(view.isInDocument()).to.equal(true);
+
+                document.body.removeChild(node);
             });
 
         });
