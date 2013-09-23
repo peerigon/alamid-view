@@ -229,7 +229,8 @@ describe("View", function () {
             });
 
             describe(".at(node)", function () {
-                var node;
+                var node,
+                    emit;
 
                 beforeEach(function () {
                     node = view._root;
@@ -254,6 +255,19 @@ describe("View", function () {
                 it("should add the child to the children array", function () {
                     view.append(child).at(node);
                     expect(view.children()).to.contain(child);
+                });
+
+                it("should emit a 'child'-event", function () {
+                    view.config.emit = emit = sinon.spy();
+                    view.append(child).at(node);
+
+                    expect(emit).to.have.been.calledWith("child");
+                    event = emit.firstCall.args[1];
+                    expect(event).to.eql({
+                        name: "child",
+                        target: view,
+                        child: child
+                    });
                 });
 
                 describe("when the child is currently part of another view", function () {
@@ -305,8 +319,9 @@ describe("View", function () {
 
             });
 
-            describe("when the view is part of another view", function () {
-                var parent;
+            describe("when the view has a parent view", function () {
+                var parent,
+                    emit;
 
                 beforeEach(function () {
                     parent = new View();
@@ -332,49 +347,25 @@ describe("View", function () {
                 it("should remove the child from the children-array", function () {
                     view.detach();
                     expect(parent.children()).to.not.contain(view);
-                });                
-
-            });
-
-        });
-
-        describe(".detach(child)", function () {
-            var child;
-
-            beforeEach(function () {
-                view = new View();
-            });
-
-            it("should be chainable", function () {
-                expect(view.detach(new View())).to.equal(view);
-            });
-
-            describe("when the passed view is a child", function () {
-
-                beforeEach(function () {
-                    child = new View();
-                    view.append(child).at(view._root);
                 });
 
+                it("should emit a 'detach'-event", function () {
+                    view.config.emit = emit = sinon.spy();
+                    view.detach();
 
-
-
-
-            });
-
-            describe("when the passed view is not a child", function () {
-                var otherView;
-
-                beforeEach(function () {
-                    child = new View();
-                    otherView = new View();
-                    view.append(child).at(view._root);
+                    expect(emit).to.have.been.calledWith("detach");
+                    event = emit.firstCall.args[1];
+                    expect(event).to.eql({
+                        name: "detach",
+                        target: view,
+                        oldParent: parent
+                    });
                 });
 
-                it("should have no effect", function () {
-                    otherView.detach(child);
-                    expect(child.parent()).to.equal(view);
-                    expect(otherView.children()).to.not.contain(child);
+                it("should emit the 'detach'-event after the view has been detached", function () {
+                    view.config.emit = function () {
+                        expect(view.parent()).to.equal(null);
+                    };
                 });
 
             });
@@ -399,6 +390,12 @@ describe("View", function () {
             it("should remove all node references", function () {
                 view.dispose();
                 expect(collectNodes(view)).to.be.empty;
+            });
+
+            it("should call view.detach()", function () {
+                view.detach = sinon.spy();
+                view.dispose();
+                expect(view.detach).to.have.been.called;
             });
 
             it("should remove references on the appender that could point back to the view", function () {
@@ -438,6 +435,7 @@ describe("View", function () {
                 view.dispose();
 
                 expect(emit).to.have.been.calledWith("dispose");
+
                 event = emit.firstCall.args[1];
                 expect(event).to.eql({
                     name: "dispose",
