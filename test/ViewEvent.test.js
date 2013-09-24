@@ -13,6 +13,70 @@ describe("ViewEvent", function () {
 
     describe(".prototype", function () {
 
+        describe(".bubbles", function () {
+
+            it("should be false by default", function () {
+                expect(ViewEvent.prototype.bubbles).to.equal(false);
+            });
+
+        });
+
+        describe(".cancelable", function () {
+
+            it("should be false by default", function () {
+                expect(ViewEvent.prototype.cancelable).to.equal(false);
+            });
+
+        });
+
+        describe(".currentTarget", function () {
+
+            it("should be null by default", function () {
+                expect(ViewEvent.prototype.currentTarget).to.equal(null);
+            });
+
+        });
+
+        describe(".defaultPrevented", function () {
+
+            it("should be false by default", function () {
+                expect(ViewEvent.prototype.defaultPrevented).to.equal(false);
+            });
+
+        });
+
+        describe(".target", function () {
+
+            it("should be null by default", function () {
+                expect(ViewEvent.prototype.target).to.equal(null);
+            });
+
+        });
+
+        describe(".target", function () {
+
+            it("should be null by default", function () {
+                expect(ViewEvent.prototype.target).to.equal(null);
+            });
+
+        });
+
+        describe(".timeStamp", function () {
+
+            it("should be 0 by default", function () {
+                expect(ViewEvent.prototype.timeStamp).to.equal(0);
+            });
+
+        });
+
+        describe(".type", function () {
+
+            it("should be '' by default", function () {
+                expect(ViewEvent.prototype.type).to.equal("");
+            });
+
+        });
+
         describe(".constructor", function () {
 
             it("should be an override-able function", function () {
@@ -29,30 +93,21 @@ describe("ViewEvent", function () {
 
         });
 
-        describe(".constructor(target)", function () {
+        describe(".constructor()", function () {
 
             it("should return an instance of ViewEvent", function () {
                 expect(new ViewEvent()).to.be.an.instanceof(ViewEvent);
             });
 
-            it("should set the given target as .target", function () {
-                var target = {};
+            it("should set the timeStamp to Date.now()", function () {
+                var now = Date.now(),
+                    timeStamp = new ViewEvent().timeStamp,
+                    then = Date.now();
 
-                expect(new ViewEvent(target).target).to.equal(target);
+                expect(timeStamp).to.be.at.least(now);
+                expect(timeStamp).to.be.at.most(then);
             });
 
-        });
-
-    });
-
-    describe(".isDefaultPrevented()", function () {
-
-        beforeEach(function () {
-            event = new ViewEvent();
-        });
-
-        it("should return false by default", function () {
-            expect(event.isDefaultPrevented()).to.equal(false);
         });
 
     });
@@ -63,28 +118,42 @@ describe("ViewEvent", function () {
             event = new ViewEvent();
         });
 
-        it("should set isDefaultPrevented() to true", function () {
-            event.preventDefault();
-            expect(event.isDefaultPrevented()).to.equal(true);
-            event.preventDefault(); // calling it twice doesn't change a thing
-            expect(event.isDefaultPrevented()).to.equal(true);
+        describe("if .cancelable is true", function () {
+
+            beforeEach(function () {
+                event.cancelable = true;
+            });
+
+            it("should set .defaultPrevented to true", function () {
+                event.preventDefault();
+                expect(event.defaultPrevented).to.equal(true);
+                event.preventDefault(); // calling it twice doesn't change a thing
+                expect(event.defaultPrevented).to.equal(true);
+            });
+
+        });
+
+        describe("if .cancelable is false", function () {
+
+            it("should do nothing", function () {
+                event.preventDefault();
+                expect(event.defaultPrevented).to.equal(false);
+                event.preventDefault(); // calling it twice doesn't change a thing
+                expect(event.defaultPrevented).to.equal(false);
+            });
+
         });
 
     });
 
-    describe(".emit()", function () {
+    describe(".stopPropagation()", function () {
 
-        it("should trigger target.config.emit", function () {
-            var target = new View();
+        beforeEach(function () {
+            event = new ViewEvent();
+        });
 
-            target.config.emit = sinon.spy();
-
-            event = new ViewEvent(target);
-            event.name = "someevent";
-            event.emit();
-
-            expect(target.config.emit).to.have.been.calledWith("someevent", event);
-            expect(target.config.emit).to.have.been.calledOn(target);
+        it("should do nothing", function () {
+            event.stopPropagation();
         });
 
     });
