@@ -35,6 +35,14 @@ describe("BubbleEvent", function () {
             MyView.prototype = Object.create(View.prototype);
         });
 
+        describe(".bubbles", function () {
+
+            it("should be true by default", function () {
+                expect(BubbleEvent.prototype.bubbles).to.equal(true);
+            });
+
+        });
+
         describe(".constructor", function () {
 
             it("should be an override-able function", function () {
@@ -51,7 +59,7 @@ describe("BubbleEvent", function () {
 
         });
 
-        describe(".constructor(target)", function () {
+        describe(".constructor()", function () {
 
             it("should return an instance of BubbleEvent", function () {
                 expect(new BubbleEvent(new MyView())).to.be.an.instanceof(BubbleEvent);
@@ -68,14 +76,14 @@ describe("BubbleEvent", function () {
 
                 target = new MyView();
                 event = new BubbleEvent(target);
-                expect(ViewEvent.prototype.constructor).to.have.been.calledWith(target);
+                expect(ViewEvent.prototype.constructor).to.have.been.called;
 
                 ViewEvent.prototype.constructor = constructor;
             });
 
         });
 
-        describe(".emit()", function () {
+        /*describe(".emit()", function () {
 
             it("should call ViewEvent.prototype.emit()", function () {
                 var emit = ViewEvent.prototype.emit;
@@ -129,7 +137,7 @@ describe("BubbleEvent", function () {
                 event.emit();
             });
 
-        });
+        });*/
 
     });
 
