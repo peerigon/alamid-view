@@ -18,8 +18,10 @@ describe("View", function () {
         var config;
 
         function emit() {}
-        function once() {}
+        function on() {}
+        function removeListener() {}
         function removeAllListeners() {}
+        function hasListener() {}
         function $() {}
         function $removeEventListener() {}
 
@@ -34,16 +36,20 @@ describe("View", function () {
         it("should set the given config", function () {
             View.configure({
                 emit: emit,
-                once: once,
+                on: on,
+                removeListener: removeListener,
                 removeAllListeners: removeAllListeners,
+                hasListener: hasListener,
                 $: $,
                 $removeEventListener: $removeEventListener,
                 dev: true
             });
 
             expect(View.prototype.config.emit).to.equal(emit);
-            expect(View.prototype.config.once).to.equal(once);
+            expect(View.prototype.config.on).to.equal(on);
+            expect(View.prototype.config.removeListener).to.equal(removeListener);
             expect(View.prototype.config.removeAllListeners).to.equal(removeAllListeners);
+            expect(View.prototype.config.hasListener).to.equal(hasListener);
             expect(View.prototype.config.$).to.equal($);
             expect(View.prototype.config.$removeEventListener).to.equal($removeEventListener);
             expect(View.prototype.config.dev).to.equal(true);
@@ -381,6 +387,112 @@ describe("View", function () {
                     view.config.emit = function () {
                         expect(view.parent()).to.equal(null);
                     };
+                });
+
+            });
+
+        });
+
+        describe(".addEventListener()", function () {
+
+            function listener() {}
+
+            beforeEach(function () {
+                view = new View();
+                view.config = Object.create(view.config);
+                view.config.hasListener = sinon.stub().returns(false);
+            });
+
+            it("should call .config.on()", function () {
+                view.config.on = sinon.spy();
+                view.addEventListener("CLICK", listener);
+
+                expect(view.config.on).to.have.been.calledWith("click", listener);
+            });
+
+            it("should not add the same listener multiple times", function () {
+                view.config.on = sinon.spy();
+                view.config.hasListener = sinon.stub().returns(true);
+                view.addEventListener("CLICK", listener);
+
+                expect(view.config.on).to.not.have.been.called;
+                expect(view.config.hasListener).to.have.been.calledWith("click", listener);
+            });
+
+            describe("in contrast to the specification", function () {
+
+                it("should ignore third argument useCapture", function () {
+                    view.config.on = sinon.spy();
+                    view.addEventListener("click", listener, false);
+                    expect(view.config.on).to.have.been.calledWith("click", listener);
+                });
+
+            });
+
+        });
+
+        describe(".removeEventListener()", function () {
+
+            function listener() {}
+
+            beforeEach(function () {
+                view = new View();
+                view.config = Object.create(view.config);
+            });
+
+            it("should call .config.removeListener()", function () {
+                view.config.removeListener = sinon.spy();
+                view.removeEventListener("CLICK", listener);
+                expect(view.config.removeListener).to.have.been.calledWith("click", listener);
+            });
+
+            describe("in contrast to the specification", function () {
+
+                it("should ignore third argument useCapture", function () {
+                    view.config.removeListener = sinon.spy();
+                    view.removeEventListener("CLICK", listener, false);
+                    expect(view.config.removeListener).to.have.been.calledWith("click", listener);
+                });
+
+            });
+
+        });
+
+        // TODO finish dispatchEvent tests
+        describe(".dispatchEvent()", function () {
+            var event;
+
+            beforeEach(function () {
+                view = new View();
+                view.config = Object.create(view.config);
+                event = { type: "CLICK" };
+            });
+
+            it("should throw an error if the event type is missing", function () {
+                expect(function () {
+                    view.dispatchEvent({});
+                }).to.throw(Error, "Event type is missing");
+            });
+
+            it("should lowercase the event's type", function () {
+                view.dispatchEvent(event);
+
+                expect(event.type).to.equal("click");
+            });
+
+            describe("when the event does not bubble", function () {
+
+                beforeEach(function () {
+                    event.bubbles = false;
+                });
+
+                it("just should call view.config.emit once", function () {
+                    view.config.emit = sinon.spy();
+
+                    view.dispatchEvent(event);
+
+                    expect(view.config.emit).to.have.been.calledOnce;
+                    expect(view.config.emit).to.have.been.calledWith("click", event);
                 });
 
             });
