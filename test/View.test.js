@@ -272,8 +272,7 @@ describe("View", function () {
             });
 
             describe(".at(node)", function () {
-                var node,
-                    emit;
+                var node;
 
                 beforeEach(function () {
                     node = view._root;
