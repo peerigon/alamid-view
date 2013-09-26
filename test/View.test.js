@@ -67,13 +67,26 @@ describe("View", function () {
     });
 
     describe(".use()", function () {
+        var plugin,
+            config;
+
+        beforeEach(function () {
+            plugin = sinon.spy();
+            config = {};
+        });
 
         it("should provide a plugin-interface", function () {
-            var plugin = sinon.spy(),
-                config = {};
-
             View.use(plugin, config);
             expect(plugin).to.have.been.calledWith(View, config);
+        });
+
+        it("should be usable on other objects too", function () {
+            var otherObj = {
+                use: View.use
+            };
+
+            otherObj.use(plugin);
+            expect(plugin).to.have.been.calledWith(otherObj);
         });
 
         it("should be chainable", function () {
