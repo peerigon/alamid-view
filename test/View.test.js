@@ -3,6 +3,7 @@
 var chai = require("chai"),
     sinon = require("sinon"),
     View = require("../lib/View.js"),
+    ViewEvent = require("../lib/ViewEvent.js"),
     collectNodes = require("../lib/collectNodes.js"),
     expect = chai.expect;
 
@@ -12,6 +13,14 @@ describe("View", function () {
 
     it("should return an instance of View", function () {
         expect(new View()).to.be.an.instanceof(View);
+    });
+
+    describe(".Event", function () {
+
+        it("should expose ViewEvent", function () {
+            expect(View.Event).to.equal(ViewEvent);
+        });
+
     });
 
     describe(".configure()", function () {
@@ -59,12 +68,12 @@ describe("View", function () {
 
     describe(".use()", function () {
 
-        it("should provide an plugin-interface", function () {
-            var plugin = sinon.spy();
+        it("should provide a plugin-interface", function () {
+            var plugin = sinon.spy(),
+                config = {};
 
-            View.use(plugin);
-            expect(plugin).to.have.been.calledWith(View);
-            expect(View.use(plugin)).to.equal(View);
+            View.use(plugin, config);
+            expect(plugin).to.have.been.calledWith(View, config);
         });
 
         it("should be chainable", function () {
@@ -278,19 +287,6 @@ describe("View", function () {
                     expect(view.children()).to.contain(child);
                 });
 
-                it("should emit a 'child'-event", function () {
-                    view.config.emit = emit = sinon.spy();
-                    view.append(child).at(node);
-
-                    expect(emit).to.have.been.calledWith("child");
-                    event = emit.firstCall.args[1];
-                    expect(event).to.eql({
-                        name: "child",
-                        target: view,
-                        child: child
-                    });
-                });
-
                 describe("when the child is currently part of another view", function () {
 
                     it("should call .detach() first", function () {
@@ -376,11 +372,9 @@ describe("View", function () {
 
                     expect(emit).to.have.been.calledWith("detach");
                     event = emit.firstCall.args[1];
-                    expect(event).to.eql({
-                        name: "detach",
-                        target: view,
-                        oldParent: parent
-                    });
+                    expect(event).to.have.property("type", "detach");
+                    expect(event).to.have.property("target", view);
+                    expect(event).to.have.property("oldParent", parent);
                 });
 
                 it("should emit the 'detach'-event after the view has been detached", function () {
@@ -640,10 +634,8 @@ describe("View", function () {
                 expect(emit).to.have.been.calledWith("dispose");
 
                 event = emit.firstCall.args[1];
-                expect(event).to.eql({
-                    name: "dispose",
-                    target: view
-                });
+                expect(event).to.have.property("type", "dispose");
+                expect(event).to.have.property("target", view);
             });
 
             describe("in dev-mode", function () {
