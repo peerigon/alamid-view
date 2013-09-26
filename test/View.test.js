@@ -458,14 +458,13 @@ describe("View", function () {
 
         });
 
-        // TODO finish dispatchEvent tests
         describe(".dispatchEvent()", function () {
             var event;
 
             beforeEach(function () {
                 view = new View();
                 view.config = Object.create(view.config);
-                event = { type: "CLICK" };
+                event = { type: "CLICK", defaultPrevented: false };
             });
 
             it("should throw an error if the event type is missing", function () {
@@ -478,6 +477,16 @@ describe("View", function () {
                 view.dispatchEvent(event);
 
                 expect(event.type).to.equal("click");
+            });
+
+            it("should return whether the default has been prevented or not", function () {
+                expect(view.dispatchEvent(event)).to.equal(false);
+
+                view.config.emit = function (eventType, event) {
+                    event.defaultPrevented = true;
+                };
+
+                expect(view.dispatchEvent(event)).to.equal(true);
             });
 
             describe("when the event does not bubble", function () {
@@ -495,6 +504,73 @@ describe("View", function () {
                     expect(view.config.emit).to.have.been.calledWith("click", event);
                 });
 
+            });
+            
+            describe("when the event does bubble", function () {
+
+                function createViewCascade() {
+                    var view1 = new View(),
+                        view2 = new View(),
+                        view3 = new View();
+
+                    view1.config = Object.create(view1.config);
+                    view2.config = Object.create(view2.config);
+                    view3.config = Object.create(view3.config);
+
+                    view1.append(view2).at(view1.root());
+                    view2.append(view3).at(view2.root());
+
+                    return view3;
+                }
+
+                beforeEach(function () {
+                    event.bubbles = true;
+                    view = createViewCascade();
+                });
+               
+                it("should climb up all parents one after another and emit the event", function () {
+                    view.config.emit = sinon.spy();
+                    view.parent().config.emit = sinon.spy();
+                    view.parent().parent().config.emit = sinon.spy();
+    
+                    view.dispatchEvent(event);
+    
+                    expect(view.parent().config.emit).to.have.been.calledWith("click", event);
+                    expect(view.parent().config.emit).to.have.been.calledOn(view.parent());
+                    expect(view.parent().parent().config.emit).to.have.been.calledWith("click", event);
+                    expect(view.parent().parent().config.emit).to.have.been.calledOn(view.parent().parent());
+                });
+    
+                it("should update the currentTarget accordingly", function (done) {
+                    view.config.emit = function (eventType, event) {
+                        expect(event.currentTarget).to.equal(view);
+                    };
+    
+                    view.parent().config.emit = function (eventType, event) {
+                        expect(event.currentTarget).to.equal(view.parent());
+                    };
+    
+                    view.parent().parent().config.emit = function (eventType, event) {
+                        expect(event.currentTarget).to.equal(view.parent().parent());
+                        done();
+                    };
+    
+                    view.dispatchEvent(event);
+                });
+
+                it("should stop the propagation if .stopPropagation() has been called", function () {
+                    view.config.emit = sinon.spy();
+                    view.parent().config.emit = function (eventType, event) {
+                        event.stopPropagation();
+                    };
+                    view.parent().parent().config.emit = sinon.spy();
+
+                    view.dispatchEvent(event);
+
+                    expect(view.config.emit).to.have.been.called;
+                    expect(view.parent().parent().config.emit).to.not.have.been.called;
+                });
+                
             });
 
         });

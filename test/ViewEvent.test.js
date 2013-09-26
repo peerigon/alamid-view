@@ -94,6 +94,18 @@ describe("ViewEvent", function () {
         });
 
         describe(".constructor()", function () {
+            var event;
+
+            function MyViewEvent() {
+                ViewEvent.apply(this, arguments);
+            }
+
+            before(function () {
+                MyViewEvent.prototype = Object.create(ViewEvent.prototype);
+                MyViewEvent.prototype.type = "super special event";
+                MyViewEvent.prototype.bubbles = true;
+                MyViewEvent.prototype.cancelable = true;
+            });
 
             it("should return an instance of ViewEvent", function () {
                 expect(new ViewEvent()).to.be.an.instanceof(ViewEvent);
@@ -106,6 +118,30 @@ describe("ViewEvent", function () {
 
                 expect(timeStamp).to.be.at.least(now);
                 expect(timeStamp).to.be.at.most(then);
+            });
+
+            describe("if no additional parameters are provided", function () {
+
+                it("should not modify .cancelable, .bubbles, .type", function () {
+                    event = new MyViewEvent();
+
+                    expect(event.cancelable).to.equal(true);
+                    expect(event.bubbles).to.equal(true);
+                    expect(event.type).to.equal("super special event");
+                });
+
+            });
+
+            describe("if additional parameters are provided", function () {
+
+                it("should override the event's defaults", function () {
+                    event = new ViewEvent("super special event", true, true);
+
+                    expect(event.cancelable).to.equal(true);
+                    expect(event.bubbles).to.equal(true);
+                    expect(event.type).to.equal("super special event");
+                });
+
             });
 
         });
