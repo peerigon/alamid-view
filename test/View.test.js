@@ -384,8 +384,10 @@ describe("View", function () {
 
                     expect(emit).to.have.been.calledWith("detach");
                     event = emit.firstCall.args[1];
+                    expect(event).to.be.an.instanceof(ViewEvent);
                     expect(event).to.have.property("type", "detach");
                     expect(event).to.have.property("target", view);
+                    expect(event).to.have.property("currentTarget", view);
                     expect(event).to.have.property("oldParent", parent);
                 });
 
@@ -716,8 +718,10 @@ describe("View", function () {
                 expect(emit).to.have.been.calledWith("dispose");
 
                 event = emit.firstCall.args[1];
+                expect(event).to.be.an.instanceof(ViewEvent);
                 expect(event).to.have.property("type", "dispose");
                 expect(event).to.have.property("target", view);
+                expect(event).to.have.property("currentTarget", view);
             });
 
             describe("in dev-mode", function () {
