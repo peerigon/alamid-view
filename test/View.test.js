@@ -289,9 +289,16 @@ describe("View", function () {
                 });
 
                 it("should set the child's isInDocument-flag according to the parent view's", function () {
-                    view._isInDocument = true; // fake isInDocument
+                    view.isInDocument = function () { return true; };
+
                     view.append(child).at(node);
                     expect(child.isInDocument()).to.equal(true);
+
+                    child.detach();
+
+                    view.isInDocument = function () { return false; };
+                    view.append(child).at(node);
+                    expect(child.isInDocument()).to.equal(false);
                 });
 
                 it("should add the child to the children array", function () {
@@ -309,6 +316,21 @@ describe("View", function () {
                         view.append(child).at(view._root);
 
                         expect(child.detach).to.have.been.called;
+                    });
+
+                });
+
+                describe("when the view is in the document", function () {
+
+                    it("should broadcast the 'document'-event on the new child", function () {
+                        child.broadcast = sinon.spy();
+                        view.isInDocument = function () { return true; };
+
+                        view.append(child).at(node);
+
+                        event = child.broadcast.firstCall.args[0];
+                        expect(event).to.be.an.instanceof(ViewEvent);
+                        expect(event).to.have.property("type", "document");
                     });
 
                 });
@@ -401,7 +423,7 @@ describe("View", function () {
 
         });
 
-        describe(".addEventListener()", function () {
+        describe(".addEventListener(type, listener)", function () {
 
             function listener() {}
 
@@ -439,7 +461,7 @@ describe("View", function () {
 
         });
 
-        describe(".removeEventListener()", function () {
+        describe(".removeEventListener(type, listener)", function () {
 
             function listener() {}
 
@@ -466,7 +488,7 @@ describe("View", function () {
 
         });
 
-        describe(".dispatchEvent()", function () {
+        describe(".dispatchEvent(event)", function () {
             var event;
 
             beforeEach(function () {
@@ -582,7 +604,7 @@ describe("View", function () {
 
         });
 
-        describe(".broadcast()", function () {
+        describe(".broadcast(event)", function () {
             var view,
                 children,
                 broadcast;
@@ -629,6 +651,7 @@ describe("View", function () {
             it("should emit the given event on the view and every child and so on", function () {
                 view.broadcast(broadcast);
 
+                expect(view.config.emit).to.have.been.calledWith("message", broadcast);
                 expect(children[0].config.emit).to.have.been.calledWith("message", broadcast);
                 expect(children[0].children()[0].config.emit).to.have.been.calledWith("message", broadcast);
                 expect(children[1].config.emit).to.have.been.calledWith("message", broadcast);
@@ -649,6 +672,22 @@ describe("View", function () {
                 };
 
                 view.broadcast(broadcast);
+            });
+
+            describe("when .stopPropagation() is called on the brooadcast", function () {
+
+                it("should throw an error", function (done) {
+                    children[0].config.emit = function (eventType, event) {
+                        expect(function () {
+                            event.stopPropagation();
+                        }).to.throw(Error, "You can't call .stopPropagation() on a broadcast");
+
+                        done();
+                    };
+
+                    view.broadcast(broadcast);
+                });
+
             });
 
         });
