@@ -547,7 +547,7 @@ describe("View", function () {
                     expect(view.parent().parent().config.emit).to.have.been.calledOn(view.parent().parent());
                 });
     
-                it("should update the currentTarget accordingly", function (done) {
+                it("should update the currentTarget accordingly", function () {
                     view.config.emit = function (eventType, event) {
                         expect(event.currentTarget).to.equal(view);
                     };
@@ -558,7 +558,6 @@ describe("View", function () {
     
                     view.parent().parent().config.emit = function (eventType, event) {
                         expect(event.currentTarget).to.equal(view.parent().parent());
-                        done();
                     };
     
                     view.dispatchEvent(event);
@@ -577,6 +576,77 @@ describe("View", function () {
                     expect(view.parent().parent().config.emit).to.not.have.been.called;
                 });
                 
+            });
+
+        });
+
+        describe(".broadcast()", function () {
+            var view,
+                children,
+                broadcast;
+
+            function createViewCascade() {
+                var view1 = new View(),
+                    view2 = new View(),
+                    view3 = new View(),
+                    view4 = new View(),
+                    view5 = new View();
+
+                view1.config = Object.create(view1.config);
+                view2.config = Object.create(view2.config);
+                view3.config = Object.create(view3.config);
+                view4.config = Object.create(view4.config);
+                view5.config = Object.create(view5.config);
+
+                view1.config.emit = sinon.spy();
+                view2.config.emit = sinon.spy();
+                view3.config.emit = sinon.spy();
+                view4.config.emit = sinon.spy();
+                view5.config.emit = sinon.spy();
+
+                view1.append(view2).at(view1.root());
+                view1.append(view3).at(view1.root());
+                view2.append(view4).at(view2.root());
+                view3.append(view5).at(view3.root());
+
+                return view1;
+            }
+
+            beforeEach(function () {
+                view = createViewCascade();
+                children = view.children();
+                broadcast = { type: "MESSAGE" };
+            });
+
+            it("should throw an error if the broadcast type is missing", function () {
+                expect(function () {
+                    view.broadcast({});
+                }).to.throw(Error, "Broadcast type is missing");
+            });
+
+            it("should emit the given event on the view and every child and so on", function () {
+                view.broadcast(broadcast);
+
+                expect(children[0].config.emit).to.have.been.calledWith("message", broadcast);
+                expect(children[0].children()[0].config.emit).to.have.been.calledWith("message", broadcast);
+                expect(children[1].config.emit).to.have.been.calledWith("message", broadcast);
+                expect(children[1].children()[0].config.emit).to.have.been.calledWith("message", broadcast);
+            });
+
+            it("should update the currentTarget accordingly", function () {
+                children[0].config.emit = function (eventType, event) {
+                    expect(event.currentTarget).to.equal(children[0]);
+                };
+
+                children[1].config.emit = function (eventType, event) {
+                    expect(event.currentTarget).to.equal(children[1]);
+                };
+
+                children[0].children()[0].config.emit = function (eventType, event) {
+                    expect(event.currentTarget).to.equal(children[0].children()[0]);
+                };
+
+                view.broadcast(broadcast);
             });
 
         });
