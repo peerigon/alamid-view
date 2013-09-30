@@ -604,7 +604,7 @@ describe("View", function () {
 
         });
 
-        describe(".broadcast(event)", function () {
+        describe(".broadcast(broadcast)", function () {
             var view,
                 children,
                 broadcast;
@@ -672,6 +672,13 @@ describe("View", function () {
                 };
 
                 view.broadcast(broadcast);
+            });
+
+            it("should throw an error when event.bubbles is true", function () {
+                expect(function () {
+                    broadcast.bubbles = true;
+                    view.broadcast(broadcast);
+                }).to.throw(Error, "broadcast can't bubble");
             });
 
             describe("when .stopPropagation() is called on the brooadcast", function () {
