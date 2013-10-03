@@ -21,7 +21,6 @@
     "mocha": "1.x",
     "chai": "1.x",
     "sinon-chai": "2.x",
-    "sinon": "https://github.com/cjohansen/Sinon.JS/tarball/v1.7.3",
     "webpack-dev-server": "0.x",
     "mocha-loader": "0.x"
   },
@@ -33,40 +32,14 @@
     "harness": "mocha",
     "files": "test/*.js",
     "browsers": {
-      "iexplore": [
-        7,
-        8,
-        9,
-        10
-      ],
-      "chrome": [
-        20,
-        25,
-        "canary"
-      ],
-      "firefox": [
-        20,
-        22,
-        "nightly"
-      ],
-      "safari": [
-        5,
-        6
-      ],
-      "opera": [
-        11,
-        12,
-        "next"
-      ],
-      "iphone": [
-        6
-      ],
-      "ipad": [
-        6
-      ],
-      "android-browser": [
-        4.2
-      ]
+      "iexplore": [9, 10],
+      "chrome": [20, 25, "canary"],
+      "firefox": [20, 22, "nightly"],
+      "safari": [5, 6],
+      "opera": [11, 12, "next"],
+      "iphone": [6],
+      "ipad": [6],
+      "android-browser": [4.2]
     }
   },
   "author": "peerigon <developers@peerigon.com>",
