@@ -187,17 +187,8 @@ describe("View", function () {
                 view.config = Object.create(view.config);
             });
 
-            it("should return the $-enhanced root node", function () {
-                var root = {},
-                    returned,
-                    $;
-
-                view.config.$ = $ = sinon.stub().returns(root);
-
-                returned = view.root();
-
-                expect($).to.have.been.calledWith(view._root);
-                expect(returned).to.equal(root);
+            it("should return the root node", function () {
+                expect(view.root()).to.be.an.instanceof(HTMLDivElement);
             });
 
         });
@@ -226,30 +217,40 @@ describe("View", function () {
 
         });
 
-        describe(".find(query)", function () {
+        describe(".find(selector)", function () {
+            var div,
+                ul,
+                li;
 
-            beforeEach(function () {
-                view = new View();
-                view.config = Object.create(view.config);
+            before(function () {
+                div = document.createElement("div");
+                div.className = "node";
+                div.innerHTML = '<ul class="node"><li class="node"></li></ul>';
+                ul = div.firstChild;
+                li = ul.firstChild;
             });
 
-            it("should return the result of $(root).find(query)", function () {
-                var nodes = [],
-                    query = "li",
-                    find,
-                    returned,
-                    $;
+            after(function () {
+                // clearing references to prevent memory leaks in some browsers
+                div = null;
+                ul = null;
+                li = null;
+            });
 
-                find = sinon.stub().returns(nodes);
-                view.config.$ = $ = sinon.stub().returns({
-                    find: find
-                });
+            beforeEach(function () {
+                view = new View(div);
+            });
 
-                returned = view.find(query);
+            it("should query a selector on the root-node and return an array", function () {
+                expect(view.find("li")).to.eql([li]);
+            });
 
-                expect($).to.have.been.calledWith(view._root);
-                expect(find).to.have.been.calledWith(query);
-                expect(returned).to.equal(nodes);
+            it("should return null if no node matches the given selector", function () {
+                expect(view.find("button")).to.equal(null);
+            });
+
+            it("should not include the root node", function () {
+                expect(view.find(".node")).to.eql([ul, li]);
             });
 
         });
@@ -731,16 +732,6 @@ describe("View", function () {
 
                 expect(view._appender.context).to.equal(null);
                 expect(view._appender.target).to.equal(null);
-            });
-
-            it("should call view.config.$removeEventListener(view._root)", function () {
-                var root = view._root,
-                    $removeEventListener;
-
-                view.config.$removeEventListener = $removeEventListener = sinon.spy();
-                view.dispose();
-
-                expect($removeEventListener).to.have.been.calledWith(root);
             });
 
             it("should call .dispose() on all objects of .children()", function () {
