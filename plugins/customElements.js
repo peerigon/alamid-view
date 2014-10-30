@@ -3,20 +3,27 @@
 var plugin = require("alamid-plugin");
 
 var detectString = /^'.*'$/;
-var detectDashCase = /-(\w)/gi;
+var detectDashCase = /-([A-Z])/gi;
+var detectCamelCase = /(.)([A-Z])/g;
+var emptyArr = [];
 
 var customElements = plugin(function (View, elements) {
+    var self = this;
     var elementsKeys = Object.keys(elements);
+    var normalizedElementKeys = normalizeKeys(elementsKeys);
 
-    this(View.prototype).after("constructor", function () {
+    this(View.prototype).after("_initRoot", function () {
         var view = this;
+        var store = self(this).store();
         var View;
 
+        store.childrenToAdd = [];
+
         elementsKeys
-            .map(function (element) {
+            .map(function (element, i) {
                 View = elements[element];
 
-                view.find(element)
+                (view.find(normalizedElementKeys[i]) || emptyArr)
                     .forEach(function (node) {
                         var options = {};
                         var i;
@@ -34,12 +41,28 @@ var customElements = plugin(function (View, elements) {
                         }
 
                         child = new View(options);
-                        view._addChild(child, node);
                         if (viewName) {
                             view[viewName] = child;
                         }
+                        store.childrenToAdd.push({
+                            child: child,
+                            view: view,
+                            node: node
+                        });
+                        node = null; // prevent possible memory leaks
                     });
             });
+    });
+
+    this(View.prototype).after("constructor", function () {
+        var store = self(this).store();
+
+        store.childrenToAdd.forEach(function (config) {
+            config.view._addChild(config.child, config.node);
+            config.node = null; // deleting node because some browsers
+                                // are unable to clear objects which hold a reference on a DOM object
+        });
+        store.childrenToAdd = null; // we don't need that array anymore
     });
 });
 
@@ -70,4 +93,19 @@ function dashCaseToCamelCase(str) {
 function $1ToUppercase(match, $1) {
     return $1.toUpperCase();
 }
+
+function normalizeKeys(keys) {
+    return keys.map(function (key) {
+        if (detectDashCase.test(key) === false) {
+            key = key.replace(detectCamelCase, putDashBetween$1And$2);
+        }
+
+        return key.toLowerCase();
+    });
+}
+
+function putDashBetween$1And$2(match, $1, $2) {
+    return $1 + "-" + $2;
+}
+
 module.exports = customElements;

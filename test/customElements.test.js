@@ -16,7 +16,9 @@ describe("plugins/customElements", function () {
     var anotherElementSpy;
     var parentView;
 
-    function createParentView(template) {
+    function createParentView(template, casing) {
+        var elements;
+
         ParentView = function () {
             ParentView.prototype.constructor.apply(this, arguments);
         };
@@ -31,11 +33,18 @@ describe("plugins/customElements", function () {
             View.apply(this, arguments);
         };
 
-        ParentView.prototype.constructor = function () {
-            View.apply(this, arguments);
-        };
+        if (casing === "camel") {
+            elements = {
+                "CustomElement": CustomElement,
+                "AnotherElement": AnotherElement
+            };
+        } else {
+            elements = {
+                "custom-element": CustomElement,
+                "another-element": AnotherElement
+            };
+        }
 
-        ParentView.prototype.obj = {};
 
         customElementSpy = sinon.spy();
         anotherElementSpy = sinon.spy();
@@ -44,13 +53,14 @@ describe("plugins/customElements", function () {
         AnotherElement.prototype = Object.create(View.prototype);
 
         ParentView.prototype = Object.create(View.prototype);
+        ParentView.prototype.constructor = function () {
+            View.apply(this, arguments);
+        };
+        sinon.spy(ParentView.prototype, "_initRoot");
         ParentView.prototype.template = template;
 
         ParentView.use = View.use;
-        ParentView.use(customElements, {
-            "custom-element": CustomElement,
-            "another-element": AnotherElement
-        });
+        ParentView.use(customElements, elements);
 
         parentView = new ParentView();
     }
@@ -114,6 +124,32 @@ describe("plugins/customElements", function () {
         expect(anotherElementSpy.firstCall.args[0]).to.eql({
             someProperty: parentView.obj
         });
+    });
+    
+    it("should turn camelcase into dashcase", function () {
+        createParentView(
+            '<div>' +
+                '<custom-element></custom-element>' +
+                '<another-element></another-element>' +
+            '</div>',
+            "camel"
+        );
+
+        expect(customElementSpy).to.have.been.calledOnce;
+        expect(anotherElementSpy).to.have.been.calledOnce;
+    });
+
+    it("should be ok to no use all imported elements", function () {
+        createParentView(
+            '<div></div>'
+        );
+
+        expect(customElementSpy).to.not.have.been.called;
+        expect(anotherElementSpy).to.not.have.been.called;
+    });
+
+    it("should instantiate the views on initRoot", function () {
+        throw Error("Error")
     });
 
 });
