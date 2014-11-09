@@ -148,8 +148,8 @@ describe("plugins/customElements", function () {
         expect(anotherElementSpy).to.not.have.been.called;
     });
 
-    it("should instantiate the views on initRoot", function () {
-        throw Error("Error")
+    it.skip("should instantiate the views on initRoot", function () {
+        throw Error("Add Test");
     });
 
 });
