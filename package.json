@@ -24,7 +24,7 @@
     "chai": "^1.9.2",
     "mocha": "^2.0.1",
     "mocha-loader": "^0.7.0",
-    "sinon": "^1.7.0",
+    "sinon": "1.7.0",
     "sinon-chai": "^2.6.0",
     "webpack": "^1.4.13",
     "webpack-dev-server": "^1.6.5"
