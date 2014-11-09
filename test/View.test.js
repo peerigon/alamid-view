@@ -1,11 +1,12 @@
 "use strict";
 
-var chai = require("chai"),
-    sinon = require("sinon"),
-    View = require("../lib/View.js"),
-    ViewEvent = require("../lib/ViewEvent.js"),
-    collectNodes = require("../lib/collectNodes.js"),
-    expect = chai.expect;
+var chai = require("chai");
+var sinon = require("sinon");
+var pluginInterface = require("alamid-plugin/use");
+var View = require("../lib/View.js");
+var ViewEvent = require("../lib/ViewEvent.js");
+var collectNodes = require("../lib/collectNodes.js");
+var expect = chai.expect;
 
 chai.use(require("sinon-chai"));
 
@@ -23,49 +24,6 @@ describe("View", function () {
 
     });
 
-    describe(".configure()", function () {
-        var config;
-
-        function emit() {}
-        function on() {}
-        function removeListener() {}
-        function removeAllListeners() {}
-        function hasListener() {}
-        function $() {}
-        function $removeEventListener() {}
-
-        // preserve default config
-        before(function () {
-             config = View.prototype.config;
-        });
-        after(function () {
-             View.prototype.config = config;
-        });
-
-        it("should set the given config", function () {
-            View.configure({
-                emit: emit,
-                on: on,
-                removeListener: removeListener,
-                removeAllListeners: removeAllListeners,
-                hasListener: hasListener,
-                $: $,
-                $removeEventListener: $removeEventListener,
-                dev: true
-            });
-
-            expect(View.prototype.config.emit).to.equal(emit);
-            expect(View.prototype.config.on).to.equal(on);
-            expect(View.prototype.config.removeListener).to.equal(removeListener);
-            expect(View.prototype.config.removeAllListeners).to.equal(removeAllListeners);
-            expect(View.prototype.config.hasListener).to.equal(hasListener);
-            expect(View.prototype.config.$).to.equal($);
-            expect(View.prototype.config.$removeEventListener).to.equal($removeEventListener);
-            expect(View.prototype.config.dev).to.equal(true);
-        });
-
-    });
-
     describe(".use()", function () {
         var plugin,
             config;
@@ -75,22 +33,8 @@ describe("View", function () {
             config = {};
         });
 
-        it("should provide a plugin-interface", function () {
-            View.use(plugin, config);
-            expect(plugin).to.have.been.calledWith(View, config);
-        });
-
-        it("should be usable on other objects too", function () {
-            var otherObj = {
-                use: View.use
-            };
-
-            otherObj.use(plugin);
-            expect(plugin).to.have.been.calledWith(otherObj);
-        });
-
-        it("should be chainable", function () {
-            expect(View.use(function () {})).to.equal(View);
+        it("should provide the plugin-interface", function () {
+            expect(View.use).to.equal(pluginInterface);
         });
 
     });
