@@ -59,14 +59,6 @@ describe("View", function () {
 
         });
 
-        describe(".isDisposed", function () {
-
-            it("should be false by default", function () {
-                expect(View.prototype.isDisposed).to.equal(false);
-            });
-
-        });
-
         describe(".constructor", function () {
 
             it("should be an override-able function", function () {
@@ -685,9 +677,21 @@ describe("View", function () {
 
             it("should NOT call the callback when the view IS disposed", function () {
                 fn = view.async(callback);
-                view.isDisposed = true;
+                view._isDisposed = true;
                 fn();
                 expect(callback).to.not.have.been.called;
+            });
+
+        });
+
+        describe(".isDisposed()", function () {
+
+            beforeEach(function () {
+                view = new View();
+            });
+
+            it("should return false by default", function () {
+                expect(view.isDisposed()).to.equal(false);
             });
 
         });
@@ -703,7 +707,7 @@ describe("View", function () {
 
             it("should set the isDisposed-flag on true", function () {
                 view.dispose();
-                expect(view.isDisposed).to.equal(true);
+                expect(view.isDisposed()).to.equal(true);
             });
 
             it("should call removeAllListeners() on the view", function () {
