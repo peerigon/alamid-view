@@ -59,6 +59,14 @@ describe("View", function () {
 
         });
 
+        describe(".isDisposed", function () {
+
+            it("should be false by default", function () {
+                expect(View.prototype.isDisposed).to.equal(false);
+            });
+
+        });
+
         describe(".constructor", function () {
 
             it("should be an override-able function", function () {
@@ -162,9 +170,9 @@ describe("View", function () {
         });
 
         describe(".find(selector)", function () {
-            var div,
-                ul,
-                li;
+            var div;
+            var ul;
+            var li;
 
             before(function () {
                 div = document.createElement("div");
@@ -172,13 +180,6 @@ describe("View", function () {
                 div.innerHTML = '<ul class="node"><li class="node"></li></ul>';
                 ul = div.firstChild;
                 li = ul.firstChild;
-            });
-
-            after(function () {
-                // clearing references to prevent memory leaks in some browsers
-                div = null;
-                ul = null;
-                li = null;
             });
 
             beforeEach(function () {
@@ -283,8 +284,8 @@ describe("View", function () {
             });
 
             describe(".at($node) with $node being an array of one element", function () {
-                var $node,
-                    node;
+                var $node;
+                var node;
 
                 beforeEach(function () {
                     node = view._root;
@@ -316,8 +317,8 @@ describe("View", function () {
             });
 
             describe("when the view has a parent view", function () {
-                var parent,
-                    emit;
+                var parent;
+                var emit;
 
                 beforeEach(function () {
                     parent = new View();
@@ -550,16 +551,16 @@ describe("View", function () {
         });
 
         describe(".broadcast(broadcast)", function () {
-            var view,
-                children,
-                broadcast;
+            var view;
+            var children;
+            var broadcast;
 
             function createViewCascade() {
-                var view1 = new View(),
-                    view2 = new View(),
-                    view3 = new View(),
-                    view4 = new View(),
-                    view5 = new View();
+                var view1 = new View();
+                var view2 = new View();
+                var view3 = new View();
+                var view4 = new View();
+                var view5 = new View();
 
                 view1.config = Object.create(view1.config);
                 view2.config = Object.create(view2.config);
@@ -645,12 +646,17 @@ describe("View", function () {
         });
 
         describe(".dispose()", function () {
-            var removeAllListeners,
-                emit;
+            var removeAllListeners;
+            var emit;
 
             beforeEach(function () {
                 view = new View();
                 view.config = Object.create(view.config);
+            });
+
+            it("should set the isDisposed-flag on true", function () {
+                view.dispose();
+                expect(view.isDisposed).to.equal(true);
             });
 
             it("should call removeAllListeners() on the view", function () {
