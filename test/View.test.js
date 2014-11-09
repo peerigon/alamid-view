@@ -25,8 +25,8 @@ describe("View", function () {
     });
 
     describe(".use()", function () {
-        var plugin,
-            config;
+        var plugin;
+        var config;
 
         beforeEach(function () {
             plugin = sinon.spy();
@@ -641,6 +641,53 @@ describe("View", function () {
                     view.broadcast(broadcast);
                 });
 
+            });
+
+        });
+
+        describe(".async()", function () {
+            var callback;
+            var fn;
+
+            beforeEach(function () {
+                callback = sinon.spy();
+                view = new View();
+            });
+
+            it("should accept a function and return a function", function () {
+                expect(view.async(callback)).to.be.a("function");
+            });
+
+            it("should call the callback when the view is not disposed", function () {
+                fn = view.async(callback);
+                fn();
+                expect(callback).to.have.been.calledOnce;
+            });
+
+            it("should neither alter the arguments nor the context", function () {
+                var ctx = {};
+
+                fn = view.async(callback);
+                fn.call(ctx, 1, 2, 3);
+                expect(callback).to.have.been.calledWith(1, 2, 3);
+                expect(callback).to.have.been.calledOn(ctx);
+            });
+
+            it("should pass-through the callback's return value", function () {
+                var result;
+
+                fn = view.async(function () {
+                    return "hi";
+                });
+                result = fn();
+                expect(result).to.equal("hi");
+            });
+
+            it("should NOT call the callback when the view IS disposed", function () {
+                fn = view.async(callback);
+                view.isDisposed = true;
+                fn();
+                expect(callback).to.not.have.been.called;
             });
 
         });
