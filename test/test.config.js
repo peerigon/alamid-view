@@ -6,7 +6,7 @@ module.exports = {
     entry: "mocha!" + __dirname + "/main.js",
     devtool: "eval",
     watch: true,
-    define: [
+    plugins: [
         new webpack.DefinePlugin({
             /**
              * These variables need to be defined in order to resolve conditional requires because of
