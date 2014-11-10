@@ -196,8 +196,8 @@ describe("View", function () {
                 expect(view.find("li")).to.eql([li]);
             });
 
-            it("should return null if no node matches the given selector", function () {
-                expect(view.find("button")).to.equal(null);
+            it("should return an empty array if no node matches the given selector", function () {
+                expect(view.find("button")).to.eql([]);
             });
 
             it("should not include the root node", function () {
@@ -651,7 +651,7 @@ describe("View", function () {
 
         });
 
-        describe(".async()", function () {
+        describe(".async(fn)", function () {
             var callback;
             var fn;
 
