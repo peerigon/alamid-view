@@ -750,17 +750,23 @@ describe("View", function () {
             });
 
             it("should call .dispose() on all objects of .children()", function () {
-                var disp1 = {},
-                    disp2 = {};
+                var child1 = new View();
+                var child2 = new View();
+                var child3 = new View();
 
-                disp1.dispose = sinon.spy();
-                disp2.dispose = sinon.spy();
+                sinon.spy(child1, "dispose");
+                sinon.spy(child2, "dispose");
+                sinon.spy(child3, "dispose");
 
-                view.children().push(disp1, disp2);
+                view.append(child1).at(view.root());
+                view.append(child2).at(view.root());
+                view.append(child3).at(view.root());
+
                 view.dispose();
 
-                expect(disp1.dispose).to.have.been.called;
-                expect(disp2.dispose).to.have.been.called;
+                expect(child1.dispose).to.have.been.called;
+                expect(child2.dispose).to.have.been.called;
+                expect(child3.dispose).to.have.been.called;
             });
 
             it("should emit a 'dispose'-event", function () {
