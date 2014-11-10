@@ -16,10 +16,58 @@ describe("View", function () {
         expect(new View()).to.be.an.instanceof(View);
     });
 
+    describe(".EVENTS", function () {
+
+        it("should be an object with all event names", function () {
+            expect(View.EVENTS).to.eql({
+                DOCUMENT: "document",
+                DETACH: "detach",
+                DISPOSE: "dispose"
+            });
+        });
+
+    });
+
     describe(".Event", function () {
 
         it("should expose ViewEvent", function () {
             expect(View.Event).to.equal(ViewEvent);
+        });
+
+    });
+
+    describe(".DocumentEvent", function () {
+
+        it("should be a subclass of View.Event", function () {
+            expect(Object.getPrototypeOf(View.DocumentEvent.prototype)).to.equal(View.Event.prototype);
+        });
+
+        it("should have the same type as specified under View.EVENTS", function () {
+            expect(View.DocumentEvent.prototype.type).to.equal(View.EVENTS.DOCUMENT);
+        });
+
+    });
+
+    describe(".DetachEvent", function () {
+
+        it("should be a subclass of View.Event", function () {
+            expect(Object.getPrototypeOf(View.DetachEvent.prototype)).to.equal(View.Event.prototype);
+        });
+
+        it("should have the same type as specified under View.EVENTS", function () {
+            expect(View.DetachEvent.prototype.type).to.equal(View.EVENTS.DETACH);
+        });
+
+    });
+
+    describe(".DisposeEvent", function () {
+
+        it("should be a subclass of View.Event", function () {
+            expect(Object.getPrototypeOf(View.DisposeEvent.prototype)).to.equal(View.Event.prototype);
+        });
+
+        it("should have the same type as specified under View.EVENTS", function () {
+            expect(View.DisposeEvent.prototype.type).to.equal(View.EVENTS.DISPOSE);
         });
 
     });
