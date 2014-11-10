@@ -124,11 +124,25 @@ describe("View", function () {
 
         });
 
+        describe(".id()", function () {
+
+            it("should return a unique id for every instance", function () {
+                var id;
+
+                view = new View();
+                id = view.id();
+                view = new View();
+                expect(view.id()).to.equal(id + 1);
+                view = new View();
+                expect(view.id()).to.equal(id + 2);
+            });
+
+        });
+
         describe(".root()", function () {
 
             beforeEach(function () {
                 view = new View();
-                view.config = Object.create(view.config);
             });
 
             it("should return the root node", function () {
