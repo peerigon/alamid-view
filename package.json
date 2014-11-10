@@ -1,6 +1,6 @@
 {
   "name": "alamid-view",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Encapsulates dom nodes as a re-useable component",
   "main": "./lib/View.js",
   "scripts": {
