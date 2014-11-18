@@ -8,6 +8,8 @@ var ViewEvent = require("../lib/ViewEvent.js");
 var collectNodes = require("../lib/collectNodes.js");
 var expect = chai.expect;
 
+require("../matches.js");
+
 chai.use(require("sinon-chai"));
 
 describe("View", function () {
@@ -244,12 +246,12 @@ describe("View", function () {
                 expect(view.find("li")).to.eql([li]);
             });
 
-            it("should return an empty array if no node matches the given selector", function () {
-                expect(view.find("button")).to.eql([]);
+            it("should include the root node", function () {
+                expect(view.find(".node")).to.eql([div, ul, li]);
             });
 
-            it("should not include the root node", function () {
-                expect(view.find(".node")).to.eql([ul, li]);
+            it("should return an empty array if no node matches the given selector", function () {
+                expect(view.find("button")).to.eql([]);
             });
 
         });
